@@ -25,11 +25,10 @@ int do_trace(struct pt_regs *ctx) {
     tsp = last.lookup(&key);
     if (tsp != NULL) {
         delta = bpf_ktime_get_ns() - *tsp;
-        //if (delta < 1000000000) {
-            //// output if time is less than 1 second
-            //bpf_trace_printk("%d\\n", delta / 1000000);
-        //}
+        if (delta < 1000000000) {
+            // output if time is less than 1 second
             bpf_trace_printk("%d\\n", delta / 1000000);
+        }
         last.delete(&key);
     }
 
@@ -45,16 +44,12 @@ print("Tracing for quick sync's... Ctrl-C to end")
 
 # format output
 start = 0
-total = 0
 while 1:
     try:
         (task, pid, cpu, flags, ts, ms) = b.trace_fields()
         if start == 0:
             start = ts
         ts = ts - start
-        if int(ms) < 1000:
-            printb(b"At time %.2f s: multiple syncs detected, last %s ms ago" % (ts, ms))
-        total += 1
-        print(f"Total syncs run: {total}")
+        printb(b"At time %.2f s: multiple syncs detected, last %s ms ago" % (ts, ms))
     except KeyboardInterrupt:
         exit()
